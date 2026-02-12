@@ -12,6 +12,8 @@ const { sendMail } = require("../utils/common");
 // ✅ Admin Create
 
 function generateInstructorPassword(length = 8) {
+  let tempPassword ="Password@26"
+  return tempPassword
   if (length < 8) {
     throw new Error("Password length must be at least 8 characters");
   }
@@ -87,14 +89,14 @@ instructorController.post(
       // ✅ Generate JWT token
       const token = jwt.sign(
         { userId: InstructorData._id, phone: InstructorData.phone },
-        process.env.JWT_KEY
+        process.env.JWT_KEY,
       );
 
       // ✅ Store token in DB
       const updatedInstructor = await Instructor.findByIdAndUpdate(
         InstructorData._id,
         { token },
-        { new: true }
+        { new: true },
       );
       const html = `
   <div style="font-family: Arial, sans-serif; line-height:1.5; color:#222;">
@@ -116,11 +118,11 @@ instructorController.post(
   </div>
 `;
 
-      await sendMail(
-        req.body.email,
-        "Welcome to Eduverse — Your Instructor Account Details",
-        html
-      );
+      // await sendMail(
+      //   req.body.email,
+      //   "Welcome to Eduverse — Your Instructor Account Details",
+      //   html,
+      // );
       sendResponse(res, 200, "Success", {
         message: "Instructor created successfully!",
         data: updatedInstructor,
@@ -133,7 +135,7 @@ instructorController.post(
         statusCode: 500,
       });
     }
-  }
+  },
 );
 
 // adminController.put("/update", async (req, res) => {
@@ -172,7 +174,10 @@ instructorController.put(
 
       if (req.file) {
         if (instructorData.profilePic) {
-          const publicId = instructorData.profilePic.split("/").pop().split(".")[0];
+          const publicId = instructorData.profilePic
+            .split("/")
+            .pop()
+            .split(".")[0];
           await cloudinary.uploader.destroy(publicId, (error, result) => {
             if (error) {
               console.error("Error deleting old image from Cloudinary:", error);
@@ -185,9 +190,13 @@ instructorController.put(
         updatedData.profilePic = image.url;
       }
 
-      const updatedInstructor = await Instructor.findByIdAndUpdate(id, updatedData, {
-        new: true,
-      });
+      const updatedInstructor = await Instructor.findByIdAndUpdate(
+        id,
+        updatedData,
+        {
+          new: true,
+        },
+      );
 
       sendResponse(res, 200, "Success", {
         message: "Instructor updated successfully!",
@@ -200,7 +209,7 @@ instructorController.put(
         message: error.message || "Internal server error",
       });
     }
-  }
+  },
 );
 
 instructorController.delete("/delete/:id", async (req, res) => {
@@ -260,8 +269,8 @@ instructorController.post("/login", async (req, res) => {
     let updatedInstructor = await Instructor.findByIdAndUpdate(
       user._id,
       { deviceId },
-      { new: true }
-    )
+      { new: true },
+    );
     return sendResponse(res, 200, "Success", {
       message: "Instructor logged in successfully",
       data: updatedInstructor,
@@ -307,7 +316,7 @@ instructorController.post("/list", async (req, res) => {
     const instructorList = await Instructor.find(query)
       .sort(sortOption)
       .limit(parseInt(pageCount))
-      .skip((parseInt(pageNo) - 1) * parseInt(pageCount))
+      .skip((parseInt(pageNo) - 1) * parseInt(pageCount));
 
     const totalCount = await Instructor.countDocuments({});
     const activeCount = await Instructor.countDocuments({ status: true });
@@ -327,11 +336,10 @@ instructorController.post("/list", async (req, res) => {
   }
 });
 
-
 instructorController.get("/details/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const instructorDetails = await Instructor.findOne({ _id: id })
+    const instructorDetails = await Instructor.findOne({ _id: id });
     sendResponse(res, 200, "Success", {
       message: "Instructor Details retrived successfully",
       data: instructorDetails,
@@ -361,7 +369,7 @@ instructorController.put(
       }
       const isMatch = await bcrypt.compare(
         req?.body?.oldPassword,
-        instructorData?.password
+        instructorData?.password,
       );
       if (!isMatch) {
         return sendResponse(res, 404, "Failed", {
@@ -371,9 +379,13 @@ instructorController.put(
       const hashedPassword = await bcrypt.hash(req?.body?.newPassword, 10);
       let updatedData = { password: hashedPassword };
 
-      const updatedInstructor = await Instructor.findByIdAndUpdate(id, updatedData, {
-        new: true,
-      });
+      const updatedInstructor = await Instructor.findByIdAndUpdate(
+        id,
+        updatedData,
+        {
+          new: true,
+        },
+      );
 
       sendResponse(res, 200, "Success", {
         message: "Instructor password updated successfully!",
@@ -386,6 +398,6 @@ instructorController.put(
         message: error.message || "Internal server error",
       });
     }
-  }
+  },
 );
 module.exports = instructorController;

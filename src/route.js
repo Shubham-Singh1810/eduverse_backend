@@ -24,6 +24,7 @@ const categoryController = require("./controller/categoryController");
 const auth = require("./middleware/auth");
 const subCategoryController = require("./controller/subCategoryController");
 const batchController = require("./controller/batchController");
+const instructorController = require("./controller/instructorController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
@@ -50,5 +51,6 @@ router.use("/notification-event", notificationEventController);
 router.use("/category", categoryController);
 router.use("/sub-category", subCategoryController);
 router.use("/batch", batchController);
+router.use("/instructor", instructorController);
 
 module.exports = router;

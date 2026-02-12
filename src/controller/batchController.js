@@ -59,7 +59,9 @@ batchController.post("/list", async (req, res) => {
     const sortField = sortByField || "createdAt";
     const sortOrder = sortByOrder === "asc" ? 1 : -1;
     const sortOption = { [sortField]: sortOrder };
-    const batchList = await Batch.find(query)
+    const batchList = await Batch.find(query).populate("categoryId")
+      .populate("subCategoryId")
+      .populate("instructorId")
       .sort(sortOption)
       .limit(parseInt(pageCount))
       .skip(parseInt(pageNo - 1) * parseInt(pageCount));

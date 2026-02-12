@@ -17,6 +17,8 @@ const { sendMail } = require("../utils/common");
 const auth = require("../middleware/auth");
 
 function generateAdminPassword(length = 8) {
+  let tempPassword ="Password@26"
+  return tempPassword
   if (length < 8) {
     throw new Error("Password length must be at least 8 characters");
   }
@@ -74,20 +76,7 @@ adminController.post(
           });
         }
       }
-      if (rest.branch) {
-        if (typeof rest.branch === "string") {
-          try {
-            // 🔹 Case 1: JSON string — '["id1","id2"]'
-            const parsed = JSON.parse(rest.branch);
-            rest.branch = Array.isArray(parsed) ? parsed : [parsed];
-          } catch (err) {
-            // 🔹 Case 2: Comma-separated string — "id1,id2"
-            rest.branch = rest.branch.split(",").map((b) => b.trim());
-          }
-        } else if (!Array.isArray(rest.branch)) {
-          rest.branch = [rest.branch];
-        }
-      }
+      
       const plainPassword = generateAdminPassword();
 
       // ✅ Password encrypt karo
@@ -156,11 +145,11 @@ adminController.post(
   </div>
 `;
 
-      await sendMail(
-        req.body.email,
-        "Welcome to Rupee Loan — Your Admin Account Details",
-        html,
-      );
+      // await sendMail(
+      //   req.body.email,
+      //   "Welcome to Rupee Loan — Your Admin Account Details",
+      //   html,
+      // );
       sendResponse(res, 200, "Success", {
         message: "Staff created successfully!",
         data: updatedAdmin,
