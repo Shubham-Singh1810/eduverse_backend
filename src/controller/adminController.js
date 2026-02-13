@@ -4,7 +4,7 @@ require("dotenv").config();
 const Admin = require("../model/admin.Schema");
 const User = require("../model/user.Schema");
 const Faq = require("../model/faq.Schema");
-const LoanPurpose = require("../model/loanPurpose.Schema");
+
 const Branch = require("../model/branch.Schema");
 const Ticket = require("../model/ticket.Schema");
 const adminController = express.Router();
@@ -629,11 +629,6 @@ adminController.post("/global-search", auth, async (req, res) => {
           .select("_id name")
           .limit(5),
 
-        LoanPurpose.find({
-          title: regex,
-        })
-          .select("_id name")
-          .limit(5),
 
         Faq.find({
           question: regex,

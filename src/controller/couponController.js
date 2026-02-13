@@ -40,8 +40,11 @@ couponController.post("/create", upload.single("image"), async (req, res) => {
 
 couponController.post("/list", async (req, res) => {
   try {
-    const { pageNo = 1, pageCount = 10 } = req.body;
+    const { pageNo = 1, pageCount = 10, searchKey = "",
+      status } = req.body;
     const query = {};
+    if (status) query.status = status;
+    if (searchKey) query.code = { $regex: searchKey, $options: "i" };
     const couponList = await Coupon.find(query)
       .limit(parseInt(pageCount))
       .skip(parseInt(pageNo - 1) * parseInt(pageCount));

@@ -2,16 +2,12 @@ const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
 const Chat = require("../model/chat.Schema");
-const User = require("../model/user.Schema");         
-const Vendor = require("../model/vender.Schema");
-const Driver = require("../model/driver.Schema");
-const Admin = require("../model/address.Schema");
 const Ticket = require("../model/ticket.Schema");
 const chatController = express.Router();
 require("dotenv").config();
 const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
-const auth = require("../utils/auth");
+
 const { isReadable } = require("stream");
 
 chatController.post("/create", upload.single("image"), async (req, res) => {

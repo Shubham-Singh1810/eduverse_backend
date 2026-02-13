@@ -10,14 +10,7 @@ const ticketCategoryController = require("./controller/ticketCategoryController"
 const ticketController = require("./controller/ticketController");
 const chatController = require("./controller/chatController");
 const notifyController = require("./controller/notifyController");
-const loanController = require("./controller/loanController");
-const branchController = require("./controller/branchController");
-const documentController = require("./controller/documentController");
-const loanApplicationController = require("./controller/loanApplicationController");
-const loanPurposeController = require("./controller/loanPurposeController");
-const paydayLoanController = require("./controller/paydayLoanController");
 const systemConfigrationController = require("./controller/systemConfigrationController");
-const paydayLoanApplicationController = require("./controller/paydayLoanApplicationController");
 const notificationConfigrationController = require("./controller/notificationConfigrationController");
 const notificationEventController = require("./controller/notificationEventController");
 const categoryController = require("./controller/categoryController");
@@ -25,10 +18,12 @@ const auth = require("./middleware/auth");
 const subCategoryController = require("./controller/subCategoryController");
 const batchController = require("./controller/batchController");
 const instructorController = require("./controller/instructorController");
+const couponController = require("./controller/couponController");
+const bookingController = require("./controller/bookingController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
-
+router.use("/instructor", instructorController);
 router.use(auth);
 router.use("/support", supportController);
 router.use("/notification", notificationController);
@@ -38,19 +33,15 @@ router.use("/ticket-category", ticketCategoryController);
 router.use("/ticket", ticketController);
 router.use("/chat", chatController);
 router.use("/notify", notifyController);
-router.use("/loan", loanController);
-router.use("/branch", branchController);
-router.use("/document", documentController);
-router.use("/loan-application", loanApplicationController);
-router.use("/loan-purpose", loanPurposeController);
-router.use("/payday-loan", paydayLoanController);
-router.use("/payday-loan-application", paydayLoanApplicationController);
+// router.use("/document", documentController);
 router.use("/system-configration", systemConfigrationController);
 router.use("/notification-configration", notificationConfigrationController);
 router.use("/notification-event", notificationEventController);
 router.use("/category", categoryController);
 router.use("/sub-category", subCategoryController);
 router.use("/batch", batchController);
-router.use("/instructor", instructorController);
+router.use("/coupon", couponController);
+router.use("/booking", bookingController);
+
 
 module.exports = router;

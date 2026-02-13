@@ -2,14 +2,11 @@ const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
 const subCategory = require("../model/subCategory.Schema");
-const Product = require("../model/product.Schema");
-const AttributeSet = require("../model/attributeSet.Schema");
-const Attribute = require("../model/attribute.Schema");
 const subCategoryController = express.Router();
 require("dotenv").config();
 const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
-const auth = require("../utils/auth");
+
 
 subCategoryController.post(
   "/create",
@@ -95,55 +92,7 @@ subCategoryController.post("/list", async (req, res) => {
   }
 });
 
-subCategoryController.post("/attribute-list", async (req, res) => {
-  try {
-    const { productId } = req.body;
 
-    const productDetails = await Product.findOne({ _id: productId });
-
-    if (!productDetails) {
-      return sendResponse(res, 404, "Failed", {
-        message: "Product not found",
-      });
-    }
-
-    // get list of attributeSets under this product's subcategory
-    const attributeSetList = await AttributeSet.find({ subCategoryId: productDetails.subCategoryId });
-    const attributeSetIds = attributeSetList.map((set) => set._id);
-
-    // get all attributes under those sets
-    const attributeList = await Attribute.find({
-      attributeSetId: { $in: attributeSetIds },
-    });
-
-    // extract keys already added in productOtherDetails
-    const alreadyAddedAttributeNames = productDetails.productOtherDetails.map((detail) => detail.key);
-    // filter out already added attributes
-    const filteredAttributes = attributeList.filter(attr => !alreadyAddedAttributeNames.includes(attr?.name));
-
-    // format result
-    const formattedAttributes = filteredAttributes.map((attr) => ({
-      attributeId: attr._id,
-      name: attr.name,
-      value: attr.value,
-      attributeSetId: attr.attributeSetId,
-      status: attr.status,
-    }));
-
-    // send response
-    sendResponse(res, 200, "Success", {
-      message: "Attribute list retrieved successfully!",
-      data: formattedAttributes,
-      statusCode: 200,
-    });
-
-  } catch (error) {
-    console.error(error);
-    sendResponse(res, 500, "Failed", {
-      message: error.message || "Internal server error",
-    });
-  }
-});
 
 subCategoryController.put(
   "/update",
@@ -249,10 +198,10 @@ subCategoryController.get("/details/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const subCategoryDetails = await subCategory.findOne({ _id: id });
-    const productList = await Product.find({ subCategoryId: id });
+    
     sendResponse(res, 200, "Success", {
-      message: "Sub category with product list retrived successfully!",
-      data: { subCategoryDetails, productList },
+      message: "Sub category with batch list retrived successfully!",
+      data: { subCategoryDetails },
       statusCode: 200,
     });
   } catch (error) {

@@ -6,10 +6,6 @@ const batchController = express.Router();
 require("dotenv").config();
 const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
-const SubCategory = require("../model/subCategory.Schema");
-const Product = require("../model/product.Schema");
-const { sendNotification } = require("../utils/sendNotification");
-const { stack } = require("./userController");
 
 batchController.post(
   "/create",

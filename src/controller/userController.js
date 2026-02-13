@@ -25,31 +25,25 @@ userController.post("/login-with-otp", async (req, res) => {
       });
     }
 
-    // Generate OTP
     const otp = generateOTP();
-
-    // Detect if input is email or phone
-    const isEmail = /\S+@\S+\.\S+/.test(phone); // simple regex for email
+    const isEmail = /\S+@\S+\.\S+/.test(phone);
     const query = isEmail ? { email: phone } : { phone };
 
-    // Find existing user
+    // 1. Find user
     let user = await User.findOne(query);
-   const token = jwt.sign(
-        { userId: user._id, phone: user.phone, email: user.email },
-        process.env.JWT_KEY,
-        { expiresIn: "24h" }, 
-      );
+
     if (!user) {
+      // 2. New User Logic
       let newCode;
-      const lastUser = await User.findOne().sort({
-        createdAt: -1,
-      });
+      const lastUser = await User.findOne().sort({ createdAt: -1 });
+      
       if (lastUser?.code) {
         const lastNumber = parseInt(lastUser.code.replace("RPLU", ""), 10) || 0;
         newCode = "RPLU" + String(lastNumber + 1).padStart(3, "0");
       } else {
         newCode = "RPLU001";
       }
+
       user = await User.create({
         ...otherDetails,
         code: newCode,
@@ -59,59 +53,56 @@ userController.post("/login-with-otp", async (req, res) => {
         emailOtp: isEmail ? otp : undefined,
       });
 
-      
+      // 3. Generate Token after user creation
+      const token = jwt.sign(
+        { userId: user._id, phone: user.phone, email: user.email },
+        process.env.JWT_KEY,
+        { expiresIn: "24h" }
+      );
 
-      user.token = token;
-      const superAdmin = await Admin.findOne();
-
+      // Update token in DB
       user = await User.findByIdAndUpdate(
         user._id,
         { token },
-        { new: true },
+        { new: true }
       ).select("-password -emailOtp -phoneOtp");
 
       const io = req.io;
-      io.emit("new-user-registered", user);
+      if (io) io.emit("new-user-registered", user);
+
     } else {
-      // Update OTP in existing user
+      // 4. Existing User Logic
+      // Generate Token for existing user
+      const token = jwt.sign(
+        { userId: user._id, phone: user.phone, email: user.email },
+        process.env.JWT_KEY,
+        { expiresIn: "24h" }
+      );
+
       user = await User.findByIdAndUpdate(
         user._id,
         isEmail
           ? { emailOtp: otp, deviceId: req.body?.deviceId, token }
           : { phoneOtp: otp, deviceId: req.body?.deviceId, token },
-          
-        { new: true },
+        { new: true }
       ).select("-password -emailOtp -phoneOtp");
     }
 
-    // Send OTP based on type
+    // 5. Send OTP Logic
     if (isEmail) {
-      // Send OTP to Email
-      await sendMail(
-        phone,
-        `The OTP code is ${otp}. Do not share it with anyone.`,
-      );
-
+      await sendMail(phone, `The OTP code is ${otp}. Do not share it with anyone.`);
       return sendResponse(res, 200, "Success", {
         message: "OTP sent successfully on email",
         data: user,
         statusCode: 200,
       });
     } else {
-      // Send OTP to Phone
-      const appHash = "ems/3nG2V1H";
-      // const otpMessage = `<#> ${otp} is your OTP for verification. Do not share it with anyone.\n${appHash}`;
       const otpMessage = `Use ${otp} as your OTP to access your Rupee Loan, OTP is confidential and valid for 5 mins This sms sent by authkey.io`;
 
       let optResponse = await axios.post(
-        `https://api.authkey.io/request?authkey=${
-          process.env.AUTHKEY_API_KEY
-        }&mobile=${phone}&country_code=91&sid=${
-          process.env.AUTHKEY_SENDER_ID
-        }&company=Rupeeloan&otp=${otp}&message=${encodeURIComponent(
-          otpMessage,
-        )}`,
+        `https://api.authkey.io/request?authkey=${process.env.AUTHKEY_API_KEY}&mobile=${phone}&country_code=91&sid=${process.env.AUTHKEY_SENDER_ID}&company=Rupeeloan&otp=${otp}&message=${encodeURIComponent(otpMessage)}`
       );
+
       if (optResponse?.status == "200") {
         return sendResponse(res, 200, "Success", {
           message: "OTP sent successfully on phone",
