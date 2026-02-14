@@ -2,6 +2,7 @@ const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
 const Booking = require("../model/booking.Schema");
+const User = require("../model/user.Schema")
 const Coupon = require("../model/coupon.Schema");
 const bookingController = express.Router();
 require("dotenv").config();
@@ -17,7 +18,6 @@ bookingController.post(
       let imageUrl = "";
       if (couponId) {
         const coupon = await Coupon.findById(couponId);
-        
         if (!coupon) {
           return sendResponse(res, 400, "Failed", { message: "Invalid Coupon" });
         }
@@ -45,7 +45,14 @@ bookingController.post(
           $inc: { usedCount: 1 }
         });
       }
-
+      // put batchId in user schema
+      if (req?.body?.userId && req?.body?.batchId) {
+        await User.findByIdAndUpdate(req?.body?.userId, {
+          $addToSet: { 
+            myBatch: { batchId: req?.body?.batchId } 
+          }
+        });
+      }
       sendResponse(res, 200, "Success", {
         message: "Booking created successfully!",
         data: bookingCreated,
@@ -110,35 +117,25 @@ bookingController.put(
   async (req, res) => {
     try {
       const id = req.body._id;
-      const batch = await Batch.findById(id);
+      const booking = await Booking.findById(id);
 
-      if (!batch) {
+      if (!booking) {
         return sendResponse(res, 404, "Failed", {
-          message: "Batch not found",
+          message: "Booking not found",
           statusCode: 403,
         });
       }
 
       let updatedData = { ...req.body };
 
-      // Handle 'image'
-      if (req.files?.image?.length) {
-        if (batch.image) {
-          const publicId = batch.image.split("/").pop().split(".")[0];
-          await cloudinary.uploader.destroy(publicId);
-        }
-        const uploadedImage = await cloudinary.uploader.upload(
-          req.files.image[0].path,
-        );
-        updatedData.image = uploadedImage.secure_url;
-      }
-      const updatedBatch = await Batch.findByIdAndUpdate(id, updatedData, {
+      
+      const updatedBooking = await Booking.findByIdAndUpdate(id, updatedData, {
         new: true,
       });
 
       sendResponse(res, 200, "Success", {
-        message: "Batch updated successfully!",
-        data: updatedBatch,
+        message: "Booking updated successfully!",
+        data: updatedBooking,
         statusCode: 200,
       });
     } catch (error) {
@@ -154,27 +151,16 @@ bookingController.put(
 bookingController.delete("/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const batch = await Batch.findById(id);
-    if (!batch) {
+    const booking = await Booking.findById(id);
+    if (!booking) {
       return sendResponse(res, 404, "Failed", {
-        message: "Batch not found",
+        message: "Booking not found",
       });
     }
-    const imageUrl = batch.image;
-    if (imageUrl) {
-      const publicId = imageUrl.split("/").pop().split(".")[0]; // Extract public ID
-      // Delete the image from Cloudinary
-      await cloudinary.uploader.destroy(publicId, (error, result) => {
-        if (error) {
-          console.error("Error deleting image from Cloudinary:", error);
-        } else {
-          console.log("Cloudinary image deletion result:", result);
-        }
-      });
-    }
-    await Batch.findByIdAndDelete(id);
+    
+    await Booking.findByIdAndDelete(id);
     sendResponse(res, 200, "Success", {
-      message: "Batch and associated image deleted successfully!",
+      message: "Booking deleted successfully!",
       statusCode: 200,
     });
   } catch (error) {

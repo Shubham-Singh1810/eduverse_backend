@@ -20,6 +20,7 @@ const batchController = require("./controller/batchController");
 const instructorController = require("./controller/instructorController");
 const couponController = require("./controller/couponController");
 const bookingController = require("./controller/bookingController");
+const bulkBookingController = require("./controller/bulkBookingController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
@@ -42,6 +43,7 @@ router.use("/sub-category", subCategoryController);
 router.use("/batch", batchController);
 router.use("/coupon", couponController);
 router.use("/booking", bookingController);
+router.use("/bulk-booking", bulkBookingController);
 
 
 module.exports = router;

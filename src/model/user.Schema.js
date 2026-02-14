@@ -36,14 +36,12 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "91",
   },
-  kycStatus: {
-    type: Number,
-  },
-  loanHistory: [
+  
+  myBatch: [
     {
-      loanApplicationId: {
+      batchId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "LoanApplication",
+        ref: "Batch",
       },
     },
   ],

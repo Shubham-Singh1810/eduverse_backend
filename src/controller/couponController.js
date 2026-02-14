@@ -196,13 +196,7 @@ couponController.post("/validity", async (req, res) => {
       });
     }
 
-    // 3️⃣ Order Amount Validity
-    if (orderAmount < couponDetails.minimumOrderAmount) {
-      return sendResponse(res, 422, "Failed", {
-        message: `Coupon cannot be applied for orders below ₹${couponDetails.minimumOrderAmount}.`,
-        statusCode: 422,
-      });
-    }
+    
 
     // 4️⃣ Usage Limit Validation
     if (
