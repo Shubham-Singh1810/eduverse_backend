@@ -21,12 +21,16 @@ const instructorController = require("./controller/instructorController");
 const couponController = require("./controller/couponController");
 const bookingController = require("./controller/bookingController");
 const bulkBookingController = require("./controller/bulkBookingController");
+const enquiryController = require("./controller/enquiryController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
 router.use("/instructor", instructorController);
-router.use(auth);
+router.use("/enquiry", enquiryController);
+router.use("/batch", batchController);
 router.use("/support", supportController);
+router.use(auth);
+
 router.use("/notification", notificationController);
 router.use("/role", roleController);
 router.use("/permission", permissionController);
@@ -40,7 +44,6 @@ router.use("/notification-configration", notificationConfigrationController);
 router.use("/notification-event", notificationEventController);
 router.use("/category", categoryController);
 router.use("/sub-category", subCategoryController);
-router.use("/batch", batchController);
 router.use("/coupon", couponController);
 router.use("/booking", bookingController);
 router.use("/bulk-booking", bulkBookingController);

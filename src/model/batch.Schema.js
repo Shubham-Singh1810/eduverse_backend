@@ -63,6 +63,10 @@ const batchSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  isCertified: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 batchSchema.plugin(timestamps);

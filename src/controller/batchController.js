@@ -44,6 +44,7 @@ batchController.post("/list", async (req, res) => {
     const {
       searchKey = "",
       status,
+      duration,
       pageNo = 1,
       pageCount = 10,
       sortByField,
@@ -51,6 +52,7 @@ batchController.post("/list", async (req, res) => {
     } = req.body;
     const query = {};
     if (status) query.status = status;
+    if (duration) query.duration = duration;
     if (searchKey) query.name = { $regex: searchKey, $options: "i" };
     const sortField = sortByField || "createdAt";
     const sortOrder = sortByOrder === "asc" ? 1 : -1;
