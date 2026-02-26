@@ -2,6 +2,7 @@ const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
 const Batch = require("../model/batch.Schema");
+const User = require("../model/user.Schema");
 const batchController = express.Router();
 require("dotenv").config();
 const cloudinary = require("../utils/cloudinary");
@@ -190,6 +191,35 @@ batchController.get("/details/:id", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    sendResponse(res, 500, "Failed", {
+      message: error.message || "Internal server error",
+      statusCode: 500,
+    });
+  }
+});
+
+batchController.get("/student-list/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const batchStudents = await User.find({ 
+      "myBatch.batchId": id 
+    }).select("firstName lastName phone profilePic profileStatus");
+    if (!batchStudents || batchStudents.length === 0) {
+      return sendResponse(res, 404, "Not Found", {
+        message: "No students found in this batch.",
+        data: [],
+        statusCode: 404,
+      });
+    }
+
+    sendResponse(res, 200, "Success", {
+      message: "Batch students retrieved successfully!",
+      totalStudents: batchStudents.length,
+      data: batchStudents,
+      statusCode: 200,
+    });
+  } catch (error) {
+    console.error("Error fetching students:", error);
     sendResponse(res, 500, "Failed", {
       message: error.message || "Internal server error",
       statusCode: 500,

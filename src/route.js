@@ -22,6 +22,7 @@ const couponController = require("./controller/couponController");
 const bookingController = require("./controller/bookingController");
 const bulkBookingController = require("./controller/bulkBookingController");
 const enquiryController = require("./controller/enquiryController");
+const topicController = require("./controller/topicController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
@@ -29,6 +30,7 @@ router.use("/instructor", instructorController);
 router.use("/enquiry", enquiryController);
 router.use("/batch", batchController);
 router.use("/support", supportController);
+router.use("/topic", topicController);
 router.use(auth);
 
 router.use("/notification", notificationController);
