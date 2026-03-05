@@ -126,7 +126,6 @@ userController.post("/login-with-otp", async (req, res) => {
 
 userController.post("/sign-up", async (req, res) => {
   try {
-    // Check if the phone number is unique
     const existingUser = await User.findOne({
       $or: [{ phone: req.body.phone }, { email: req.body.email }],
     });
@@ -144,53 +143,30 @@ userController.post("/sign-up", async (req, res) => {
         });
       }
     }
-
-    // ----------- Generate User Code -----------
-    const year = new Date().getFullYear().toString().slice(-2);
-    const lastUser = await User.findOne({
-      code: { $regex: `^RL${year}` },
-    }).sort({ createdAt: -1 });
-
-    let count = 1;
-    if (lastUser && lastUser.code) {
-      const lastCount = parseInt(lastUser.code.slice(4));
-      count = lastCount + 1;
-    }
-
-    const paddedCount = String(count).padStart(3, "0"); // 001, 002
-    const userCode = `RL${year}${paddedCount}`;
-    // ------------------------------------------
-
-    // Generate OTP
     const phoneOtp = generateOTP();
-    const emailOtp = generateOTP();
+    // const emailOtp = generateOTP();
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    // Create a new user with provided details
     let newUser = await User.create({
       ...req.body,
       phoneOtp,
-      emailOtp,
+      // emailOtp,
       password: hashedPassword,
-      code: userCode,
     });
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: newUser._id, phone: newUser.phone },
-      process.env.JWT_KEY,
-      { expiresIn: "24h" }, // ✅ Add this
+      process.env.JWT_KEY
     );
 
-    // Store the token in the user object
     newUser.token = token;
+
     const updatedUser = await User.findByIdAndUpdate(
       newUser._id,
       { token },
       { new: true },
     ).select("-password -emailOtp -phoneOtp");
 
-    // Send OTP to phone
     const appHash = "ems/3nG2V1H";
     const otpMessage = `<#> ${phoneOtp} is your OTP for verification. Do not share it with anyone.\n${appHash}`;
 
@@ -204,10 +180,10 @@ userController.post("/sign-up", async (req, res) => {
       )}`,
     );
 
-    const emailOtpResponse = await sendMail(
-      req.body.email,
-      "The OTP verification code is " + emailOtp + " for email verification.",
-    );
+    // const emailOtpResponse = await sendMail(
+    //   req.body.email,
+    //   "The OTP verification code is " + emailOtp + " for email verification.",
+    // );
 
     if (phoneOtpResponse?.status == "200") {
       return sendResponse(res, 200, "Success", {
@@ -216,13 +192,14 @@ userController.post("/sign-up", async (req, res) => {
         statusCode: 200,
       });
     }
-    if (emailOtpResponse?.status == "200") {
-      return sendResponse(res, 200, "Success", {
-        message: "OTP sent successfully on email",
-        data: updatedUser,
-        statusCode: 200,
-      });
-    } else {
+    // if (emailOtpResponse?.status == "200") {
+    //   return sendResponse(res, 200, "Success", {
+    //     message: "OTP sent successfully on email",
+    //     data: updatedUser,
+    //     statusCode: 200,
+    //   });
+    // }
+     else {
       return sendResponse(res, 422, "Failed", {
         message: "Unable to send OTP",
         statusCode: 200,
@@ -297,7 +274,7 @@ userController.post("/otp-verification", async (req, res) => {
   }
 });
 
-userController.post("/password-login", async (req, res) => {
+userController.post("/login-with-password", async (req, res) => {
   try {
     const { email, password, deviceId } = req.body;
 
@@ -315,8 +292,6 @@ userController.post("/password-login", async (req, res) => {
         statusCode: 422,
       });
     }
-
-    // Step 2: Compare entered password with hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return sendResponse(res, 422, "Failed", {
