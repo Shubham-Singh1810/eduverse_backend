@@ -2,15 +2,12 @@ const express = require("express");
 const { sendResponse, generateOTP } = require("../utils/common");
 require("dotenv").config();
 const User = require("../model/user.Schema");
-const Admin = require("../model/admin.Schema");
 const userController = express.Router();
 const axios = require("axios");
 require("dotenv").config();
-const Booking = require("../model/booking.Schema");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
-const auth = require("../middleware/auth");
 const { sendMail } = require("../utils/common");
 const bcrypt = require("bcryptjs");
 
