@@ -277,7 +277,6 @@ userController.post("/otp-verification", async (req, res) => {
 userController.post("/login-with-password", async (req, res) => {
   try {
     const { email, password, deviceId } = req.body;
-
     let query = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailRegex.test(email)) {
