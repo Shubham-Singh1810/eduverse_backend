@@ -10,6 +10,7 @@ const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
 const { sendMail } = require("../utils/common");
 const bcrypt = require("bcryptjs");
+const auth = require("../middleware/auth");
 
 userController.post("/login-with-otp", async (req, res) => {
   try {
