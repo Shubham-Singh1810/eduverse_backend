@@ -34,7 +34,7 @@ userController.post("/login-with-otp", async (req, res) => {
       // 2. New User Logic
       let newCode;
       const lastUser = await User.findOne().sort({ createdAt: -1 });
-      
+
       if (lastUser?.code) {
         const lastNumber = parseInt(lastUser.code.replace("RPLU", ""), 10) || 0;
         newCode = "RPLU" + String(lastNumber + 1).padStart(3, "0");
@@ -55,26 +55,25 @@ userController.post("/login-with-otp", async (req, res) => {
       const token = jwt.sign(
         { userId: user._id, phone: user.phone, email: user.email },
         process.env.JWT_KEY,
-        { expiresIn: "24h" }
+        { expiresIn: "24h" },
       );
 
       // Update token in DB
       user = await User.findByIdAndUpdate(
         user._id,
         { token },
-        { new: true }
+        { new: true },
       ).select("-password -emailOtp -phoneOtp");
 
       const io = req.io;
       if (io) io.emit("new-user-registered", user);
-
     } else {
       // 4. Existing User Logic
       // Generate Token for existing user
       const token = jwt.sign(
         { userId: user._id, phone: user.phone, email: user.email },
         process.env.JWT_KEY,
-        { expiresIn: "24h" }
+        { expiresIn: "24h" },
       );
 
       user = await User.findByIdAndUpdate(
@@ -82,13 +81,16 @@ userController.post("/login-with-otp", async (req, res) => {
         isEmail
           ? { emailOtp: otp, deviceId: req.body?.deviceId, token }
           : { phoneOtp: otp, deviceId: req.body?.deviceId, token },
-        { new: true }
+        { new: true },
       ).select("-password -emailOtp -phoneOtp");
     }
 
     // 5. Send OTP Logic
     if (isEmail) {
-      await sendMail(phone, `The OTP code is ${otp}. Do not share it with anyone.`);
+      await sendMail(
+        phone,
+        `The OTP code is ${otp}. Do not share it with anyone.`,
+      );
       return sendResponse(res, 200, "Success", {
         message: "OTP sent successfully on email",
         data: user,
@@ -98,7 +100,7 @@ userController.post("/login-with-otp", async (req, res) => {
       const otpMessage = `Use ${otp} as your OTP to access your Rupee Loan, OTP is confidential and valid for 5 mins This sms sent by authkey.io`;
 
       let optResponse = await axios.post(
-        `https://api.authkey.io/request?authkey=${process.env.AUTHKEY_API_KEY}&mobile=${phone}&country_code=91&sid=${process.env.AUTHKEY_SENDER_ID}&company=Rupeeloan&otp=${otp}&message=${encodeURIComponent(otpMessage)}`
+        `https://api.authkey.io/request?authkey=${process.env.AUTHKEY_API_KEY}&mobile=${phone}&country_code=91&sid=${process.env.AUTHKEY_SENDER_ID}&company=Rupeeloan&otp=${otp}&message=${encodeURIComponent(otpMessage)}`,
       );
 
       if (optResponse?.status == "200") {
@@ -154,7 +156,7 @@ userController.post("/sign-up", async (req, res) => {
 
     const token = jwt.sign(
       { userId: newUser._id, phone: newUser.phone },
-      process.env.JWT_KEY
+      process.env.JWT_KEY,
     );
 
     newUser.token = token;
@@ -197,7 +199,7 @@ userController.post("/sign-up", async (req, res) => {
     //     statusCode: 200,
     //   });
     // }
-     else {
+    else {
       return sendResponse(res, 422, "Failed", {
         message: "Unable to send OTP",
         statusCode: 200,
@@ -287,6 +289,31 @@ userController.post("/login-with-password", async (req, res) => {
       return sendResponse(res, 422, "Failed", {
         message: "Invalid Credentials",
         statusCode: 422,
+      });
+    }
+    if (!user?.isPhoneVerified) {
+      const phoneOtp = generateOTP();
+      const appHash = "ems/3nG2V1H";
+       const otpMessage = `<#> ${phoneOtp} is your OTP for verification. Do not share it with anyone.\n${appHash}`;
+      const updatedUser = await User.findByIdAndUpdate(
+        user._id,
+        { phoneOtp },
+        { new: true },
+      ).select("-password -emailOtp -phoneOtp");
+      let phoneOtpResponse = await axios.post(
+      `https://api.authkey.io/request?authkey=${
+        process.env.AUTHKEY_API_KEY
+      }&mobile=${user?.phone}&country_code=91&sid=${
+        process.env.AUTHKEY_SENDER_ID
+      }&company=Acediva&otp=${phoneOtp}&message=${encodeURIComponent(
+        otpMessage,
+      )}`,
+    );
+    console.log(phoneOtpResponse)
+      return sendResponse(res, 401, "Failed", {
+        message: "OTP sent successfully on phone",
+        statusCode: 401,
+        data:updatedUser,
       });
     }
     const isMatch = await bcrypt.compare(password, user.password);
