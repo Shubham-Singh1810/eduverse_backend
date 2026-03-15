@@ -1,29 +1,47 @@
 const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
-const Topic = require("../model/topic.Schema");
-const topicController = express.Router();
+const CourseTopic = require("../model/courseTopic.Schema");
+const courseTopicController = express.Router();
 require("dotenv").config();
 const cloudinary = require("../utils/cloudinary");
 const upload = require("../utils/multer");
 
-topicController.post(
+courseTopicController.post(
   "/create",
-  upload.fields([{ name: "assignment", maxCount: 1 }]),
+  upload.fields([
+    { name: "assignment", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 } // Naya field add kiya
+  ]),
   async (req, res) => {
     try {
-      let imageUrl = "";
+      let assignmentUrl = "";
+      let thumbnailUrl = "";
+
+      // 1. Assignment upload logic
       if (req.files?.assignment?.length) {
-        const uploadedImage = await cloudinary.uploader.upload(
-          req.files.assignment[0].path,
+        const uploadedAssignment = await cloudinary.uploader.upload(
+          req.files.assignment[0].path
         );
-        imageUrl = uploadedImage.secure_url;
+        assignmentUrl = uploadedAssignment.secure_url;
       }
+
+      // 2. Thumbnail upload logic
+      if (req.files?.thumbnail?.length) {
+        const uploadedThumbnail = await cloudinary.uploader.upload(
+          req.files.thumbnail[0].path
+        );
+        thumbnailUrl = uploadedThumbnail.secure_url;
+      }
+
       const obj = {
         ...req.body,
-        assignment: imageUrl,
+        assignment: assignmentUrl,
+        thumbnail: thumbnailUrl, // Database mein thumbnail ka URL save karein
       };
-      const TopicCreated = await Topic.create(obj);
+
+      const TopicCreated = await CourseTopic.create(obj);
+
       sendResponse(res, 200, "Success", {
         message: "Topic created successfully!",
         data: TopicCreated,
@@ -36,10 +54,10 @@ topicController.post(
         statusCode: 500,
       });
     }
-  },
+  }
 );
 
-topicController.post("/list", async (req, res) => {
+courseTopicController.post("/list", async (req, res) => {
   try {
     const {
       searchKey = "",
@@ -48,22 +66,22 @@ topicController.post("/list", async (req, res) => {
       pageCount = 10,
       sortByField,
       sortByOrder,
-      batchId
+      courseId
     } = req.body;
     const query = {};
     if (status) query.status = status;
-    if (batchId) query.batchId = batchId;
+    if (courseId) query.courseId = courseId;
     if (searchKey) query.topicName = { $regex: searchKey, $options: "i" };
     const sortField = sortByField || "srNo";
     const sortOrder = sortByOrder === "asc" ? -1 : 1;
     const sortOption = { [sortField]: sortOrder };
-    const topicList = await Topic.find(query).populate("batchId")
+    const topicList = await CourseTopic.find(query).populate("courseId")
       .sort(sortOption)
       .limit(parseInt(pageCount))
       .skip(parseInt(pageNo - 1) * parseInt(pageCount));
-    const totalCount = await Topic.countDocuments({});
-    const completedCount = await Topic.countDocuments({ status: "completed" });
-    const upcomingCount = await Topic.countDocuments({ status: "upcoming" });
+    const totalCount = await CourseTopic.countDocuments({});
+    const completedCount = await CourseTopic.countDocuments({ status: "completed" });
+    const upcomingCount = await CourseTopic.countDocuments({ status: "upcoming" });
     sendResponse(res, 200, "Success", {
       message: "Topic list retrieved successfully!",
       data: topicList,
@@ -83,25 +101,50 @@ topicController.post("/list", async (req, res) => {
   }
 });
 
-topicController.put(
+courseTopicController.put(
   "/update",
+  upload.fields([
+    { name: "assignment", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 }
+  ]),
   async (req, res) => {
     try {
       const id = req.body._id;
-      const topic = await Topic.findById(id);
+      const topic = await CourseTopic.findById(id);
 
       if (!topic) {
         return sendResponse(res, 404, "Failed", {
           message: "Topic not found",
-          statusCode: 403,
+          statusCode: 404, // Corrected to 404
         });
       }
 
+      // Initial updatedData mein text fields (topicName, srNo, videoUrl) aa jayenge
       let updatedData = { ...req.body };
 
-      const updatedTopic = await Topic.findByIdAndUpdate(id, updatedData, {
-        new: true,
-      });
+      // 1. Check if new Assignment file is uploaded
+      if (req.files?.assignment?.length) {
+        const uploadedAssignment = await cloudinary.uploader.upload(
+          req.files.assignment[0].path
+        );
+        updatedData.assignment = uploadedAssignment.secure_url;
+      }
+
+      // 2. Check if new Thumbnail file is uploaded
+      if (req.files?.thumbnail?.length) {
+        const uploadedThumbnail = await cloudinary.uploader.upload(
+          req.files.thumbnail[0].path
+        );
+        updatedData.thumbnail = uploadedThumbnail.secure_url;
+      }
+
+      // Find and update the topic
+      const updatedTopic = await CourseTopic.findByIdAndUpdate(
+        id, 
+        { $set: updatedData }, 
+        { new: true }
+      );
+
       sendResponse(res, 200, "Success", {
         message: "Topic updated successfully!",
         data: updatedTopic,
@@ -114,13 +157,13 @@ topicController.put(
         statusCode: 500,
       });
     }
-  },
+  }
 );
 
-topicController.delete("/delete/:id", async (req, res) => {
+courseTopicController.delete("/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const topic = await Topic.findById(id);
+    const topic = await CourseTopic.findById(id);
     if (!topic) {
       return sendResponse(res, 404, "Failed", {
         message: "Topic not found",
@@ -139,12 +182,12 @@ topicController.delete("/delete/:id", async (req, res) => {
   }
 });
 
-topicController.get("/details/:id", async (req, res) => {
+courseTopicController.get("/details/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const topicDetails = await Topic.findOne({ _id: id })
-      .populate("batchId")
+    const topicDetails = await CourseTopic.findOne({ _id: id })
+      .populate("courseId")
      
 
     if (!topicDetails) {
@@ -168,4 +211,4 @@ topicController.get("/details/:id", async (req, res) => {
   }
 });
 
-module.exports = topicController;
+module.exports = courseTopicController;

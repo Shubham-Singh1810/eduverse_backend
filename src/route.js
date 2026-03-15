@@ -25,6 +25,7 @@ const enquiryController = require("./controller/enquiryController");
 const topicController = require("./controller/topicController");
 const bannerController = require("./controller/bannerController");
 const courseController = require("./controller/courseController");
+const courseTopicController = require("./controller/courseTopicController");
 
 router.use("/user", userController);
 router.use("/admin", adminController);
@@ -53,6 +54,7 @@ router.use("/booking", bookingController);
 router.use("/bulk-booking", bulkBookingController);
 router.use("/banner", bannerController);
 router.use("/course", courseController);
+router.use("/course-topic", courseTopicController);
 
 
 module.exports = router;
