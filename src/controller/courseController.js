@@ -183,11 +183,17 @@ courseController.get("/details/:id", async (req, res) => {
         statusCode: 404,
       });
     }
-    const topics = await Topic.find({courseId:id})
+    const sortField =  "srNo";
+    const sortOrder = 1;
+    const sortOption = { [sortField]: sortOrder };
+    const topics = await Topic.find({courseId:id}).sort(sortOption)
 
     sendResponse(res, 200, "Success", {
       message: "Course details retrieved successfully!",
-      data: {...CourseDetails, topics},
+      data: {
+        ...CourseDetails._doc, 
+        topics: topics         
+      },
       statusCode: 200,
     });
   } catch (error) {
