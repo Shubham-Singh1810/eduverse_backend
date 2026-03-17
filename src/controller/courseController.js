@@ -2,6 +2,7 @@ const express = require("express");
 const { sendResponse } = require("../utils/common");
 require("dotenv").config();
 const Course = require("../model/course.Schema");
+const Topic = require("../model/courseTopic.Schema");
 const User = require("../model/user.Schema");
 const courseController = express.Router();
 require("dotenv").config();
@@ -182,10 +183,11 @@ courseController.get("/details/:id", async (req, res) => {
         statusCode: 404,
       });
     }
+    const topics = await Topic.find({courseId:id})
 
     sendResponse(res, 200, "Success", {
       message: "Course details retrieved successfully!",
-      data: CourseDetails,
+      data: {...CourseDetails, topics},
       statusCode: 200,
     });
   } catch (error) {
