@@ -5,7 +5,14 @@ const bookingSchema = mongoose.Schema({
   batchId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Batch",
-    required: true,
+  },
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Course",
+  },
+  type: {
+    type: String,
+    enum:["batch", "course"],
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

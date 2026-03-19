@@ -213,6 +213,78 @@ userController.post("/sign-up", async (req, res) => {
   }
 });
 
+userController.post("/google-login", async (req, res) => {
+  try {
+    const { email, googleId, firstName, lastName, profilePic, deviceId } = req.body;
+
+    if (!email || !googleId) {
+      return sendResponse(res, 400, "Failed", {
+        message: "Email and Google ID are required.",
+        statusCode: 400,
+      });
+    }
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (!user) {
+      let newCode;
+      const lastUser = await User.findOne().sort({ createdAt: -1 });
+
+      if (lastUser?.code) {
+        const lastNumber = parseInt(lastUser.code.replace("RPLU", ""), 10) || 0;
+        newCode = "RPLU" + String(lastNumber + 1).padStart(3, "0");
+      } else {
+        newCode = "RPLU001";
+      }
+
+      user = await User.create({
+        email,
+        googleId,
+        firstName,
+        lastName,
+        profilePic,
+        deviceId,
+        code: newCode,
+        isEmailVerified: true,
+        isGoogleLogin: true,
+        profileStatus: "registered",
+      });
+    } else {
+      user.googleId = googleId; 
+      user.isGoogleLogin = true;
+      user.deviceId = deviceId;
+      if (profilePic) user.profilePic = profilePic;
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_KEY,
+      { expiresIn: "24h" }
+    );
+
+    user.token = token;
+    user.lastLogin = new Date().toISOString();
+    await user.save();
+
+    const userData = user.toObject();
+    delete userData.password;
+    delete userData.emailOtp;
+    delete userData.phoneOtp;
+
+    return sendResponse(res, 200, "Success", {
+      message: "Login successful via Google",
+      data: userData,
+      statusCode: 200,
+    });
+
+  } catch (error) {
+    console.error("Error in /google-login:", error.message);
+    return sendResponse(res, 500, "Failed", {
+      message: error.message || "Internal server error.",
+    });
+  }
+});
+
 userController.post("/otp-verification", async (req, res) => {
   try {
     const { phone, otp } = req.body;

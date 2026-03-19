@@ -45,14 +45,24 @@ bookingController.post(
           $inc: { usedCount: 1 }
         });
       }
-      // put batchId in user schema
-      if (req?.body?.userId && req?.body?.batchId) {
+      if(req?.body?.type=="batch"){
+if (req?.body?.userId && req?.body?.batchId) {
         await User.findByIdAndUpdate(req?.body?.userId, {
           $addToSet: { 
             myBatch: { batchId: req?.body?.batchId } 
           }
         });
       }
+      }else{
+if (req?.body?.userId && req?.body?.courseId) {
+        await User.findByIdAndUpdate(req?.body?.userId, {
+          $addToSet: { 
+            myCourses: { courseId: req?.body?.courseId } 
+          }
+        });
+      }
+      }
+      
       sendResponse(res, 200, "Success", {
         message: "Booking created successfully!",
         data: bookingCreated,

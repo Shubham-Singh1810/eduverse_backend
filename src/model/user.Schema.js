@@ -3,6 +3,15 @@ const timestamps = require("mongoose-timestamp");
 const { type } = require("os");
 
 const userSchema = mongoose.Schema({
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  isGoogleLogin: {
+    type: Boolean,
+    default: false,
+  },
   code: {
     type: String,
   },
@@ -36,12 +45,20 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "91",
   },
-  
+
   myBatch: [
     {
       batchId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Batch",
+      },
+    },
+  ],
+  myCourses: [
+    {
+      courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
       },
     },
   ],
@@ -62,7 +79,7 @@ const userSchema = mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
   },
   dob: {
@@ -80,7 +97,7 @@ const userSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin",
   },
-  isUserApproved:{
+  isUserApproved: {
     type: Boolean,
     default: true,
   },
