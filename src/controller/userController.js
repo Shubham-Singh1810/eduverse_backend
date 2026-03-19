@@ -215,7 +215,8 @@ userController.post("/sign-up", async (req, res) => {
 
 userController.post("/google-login", async (req, res) => {
   try {
-    const { email, googleId, firstName, lastName, profilePic, deviceId } = req.body;
+    const { email, googleId, firstName, lastName, profilePic, deviceId } =
+      req.body;
 
     if (!email || !googleId) {
       return sendResponse(res, 400, "Failed", {
@@ -250,7 +251,7 @@ userController.post("/google-login", async (req, res) => {
         profileStatus: "registered",
       });
     } else {
-      user.googleId = googleId; 
+      user.googleId = googleId;
       user.isGoogleLogin = true;
       user.deviceId = deviceId;
       if (profilePic) user.profilePic = profilePic;
@@ -259,7 +260,7 @@ userController.post("/google-login", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_KEY,
-      { expiresIn: "24h" }
+      { expiresIn: "24h" },
     );
 
     user.token = token;
@@ -276,7 +277,6 @@ userController.post("/google-login", async (req, res) => {
       data: userData,
       statusCode: 200,
     });
-
   } catch (error) {
     console.error("Error in /google-login:", error.message);
     return sendResponse(res, 500, "Failed", {
@@ -366,26 +366,26 @@ userController.post("/login-with-password", async (req, res) => {
     if (!user?.isPhoneVerified) {
       const phoneOtp = generateOTP();
       const appHash = "ems/3nG2V1H";
-       const otpMessage = `<#> ${phoneOtp} is your OTP for verification. Do not share it with anyone.\n${appHash}`;
+      const otpMessage = `<#> ${phoneOtp} is your OTP for verification. Do not share it with anyone.\n${appHash}`;
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
         { phoneOtp },
         { new: true },
       ).select("-password -emailOtp -phoneOtp");
       let phoneOtpResponse = await axios.post(
-      `https://api.authkey.io/request?authkey=${
-        process.env.AUTHKEY_API_KEY
-      }&mobile=${user?.phone}&country_code=91&sid=${
-        process.env.AUTHKEY_SENDER_ID
-      }&company=Acediva&otp=${phoneOtp}&message=${encodeURIComponent(
-        otpMessage,
-      )}`,
-    );
-    console.log(phoneOtpResponse)
+        `https://api.authkey.io/request?authkey=${
+          process.env.AUTHKEY_API_KEY
+        }&mobile=${user?.phone}&country_code=91&sid=${
+          process.env.AUTHKEY_SENDER_ID
+        }&company=Acediva&otp=${phoneOtp}&message=${encodeURIComponent(
+          otpMessage,
+        )}`,
+      );
+      console.log(phoneOtpResponse);
       return sendResponse(res, 401, "Failed", {
         message: "OTP sent successfully on phone",
         statusCode: 401,
-        data:updatedUser,
+        data: updatedUser,
       });
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -574,9 +574,36 @@ userController.post(
 userController.get("/details/:id", auth, async (req, res) => {
   try {
     const id = req.params.id;
-    const user = await User.findOne({ _id: id }).select(
-      "-password -emailOtp -phoneOtp",
-    );
+    const user = await User.findOne({ _id: id })
+      .select("-password -emailOtp -phoneOtp")
+      .populate({
+        path: "myBatch.batchId",
+        model: "Batch",
+         populate: [
+          {
+            path: "categoryId",
+            model: "Category", 
+          },
+          {
+            path: "instructorId",
+            model: "Instructor", 
+          },
+        ],
+      })
+      .populate({
+        path: "myCourses.courseId",
+        model: "Course",
+        populate: [
+          {
+            path: "categoryId",
+            model: "Category", 
+          },
+          {
+            path: "instructorId",
+            model: "Instructor", 
+          },
+        ],
+      });
     if (user) {
       return sendResponse(res, 200, "Success", {
         message: "User details fetched  successfully",
